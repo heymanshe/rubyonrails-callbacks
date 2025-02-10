@@ -1,10 +1,10 @@
 class User < ApplicationRecord
-  has_many :articles, dependent: :destroy
-  before_destroy :log_user_deletion, prepend: true
+  has_many :picture_files, dependent: :destroy
+  after_commit :log_user_saved_to_db
 
   private
 
-  def log_user_deletion
-    Rails.logger.info("User '#{name}' is being deleted")
+  def log_user_saved_to_db
+    Rails.logger.info("User was saved to database")
   end
 end

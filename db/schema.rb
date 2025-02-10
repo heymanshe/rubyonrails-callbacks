@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_02_10_113014) do
+ActiveRecord::Schema[8.0].define(version: 2025_02_10_125905) do
   create_table "articles", force: :cascade do |t|
     t.string "title"
     t.text "content"
@@ -65,6 +65,14 @@ ActiveRecord::Schema[8.0].define(version: 2025_02_10_113014) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "picture_files", force: :cascade do |t|
+    t.string "filepath"
+    t.integer "user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_picture_files_on_user_id"
+  end
+
   create_table "products", force: :cascade do |t|
     t.string "name"
     t.decimal "total_price"
@@ -86,4 +94,5 @@ ActiveRecord::Schema[8.0].define(version: 2025_02_10_113014) do
   add_foreign_key "articles", "users"
   add_foreign_key "books", "authors"
   add_foreign_key "notifications", "users"
+  add_foreign_key "picture_files", "users"
 end
