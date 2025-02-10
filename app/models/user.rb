@@ -1,11 +1,26 @@
 class User < ApplicationRecord
-  before_save :log_email_change
+  has_many :notifications
 
-  private
+  # after_create :create_welcome_notification
+  # after_create :log_creation
 
-  def log_email_change
-    if email_changed?
-      Rails.logger.info("Email changed from #{email_was} to #{email}")
-    end
+  # def create_welcome_notification
+  #   notifications.create(event: "sign_up")
+  # end
+
+  # def log_creation
+  #   Rails.logger.info("User #{name} was created.")
+  # end
+  after_create :create_welcome_notification, unless: -> { @skip_notifications }
+
+  def create_welcome_notification
+    notifications.create(event: "sign_up")
+  end
+
+  def create_without_notifications
+    @skip_notifications = true
+    save
+  ensure
+    @skip_notifications = false
   end
 end
