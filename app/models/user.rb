@@ -1,102 +1,72 @@
 class User < ApplicationRecord
-  # Validation Callbacks
-  before_validation :titleize_name
-  after_validation :log_errors
-
-  # Save Callbacks
+  before_validation :normalize_name
+  after_validation :log_validation
   before_save :hash_password
-  around_save :log_saving
-  after_save :update_cache
-
-  # Create Callbacks
+  after_save :log_save
   before_create :set_default_role
-  around_create :log_creation
   after_create :send_welcome_email
-
-  # Update Callbacks
-  before_update :check_role_change
-  around_update :log_updating
-  after_update :send_update_email
-
-  # Destroy Callbacks
-  before_destroy :check_admin_count
-  around_destroy :log_destroy_operation
-  after_destroy :notify_users
-
-  # Initialize & Find Callbacks
-  after_initialize { Rails.logger.info("You have initialized an object!") }
-  after_find { Rails.logger.info("You have found an object!") }
+  before_update :log_before_update
+  after_update :log_after_update
+  before_destroy :log_before_destroy
+  after_destroy :log_after_destroy
+  after_initialize :log_after_initialize
+  after_find :log_after_find
+  after_touch :log_after_touch
 
   private
 
-  def titleize_name
-    self.name = name.downcase.titleize if name.present?
-    Rails.logger.info("Name titleized to #{name}")
+  def normalize_name
+    self.name = name.strip.titleize if name.present?
+    Rails.logger.info("Normalized name: #{name}")
   end
 
-  def log_errors
-    Rails.logger.error("Validation failed: #{errors.full_messages.join(', ')}") if errors.any?
+  def log_validation
+    Rails.logger.info("Validation completed with errors: #{errors.full_messages}") if errors.any?
   end
 
   def hash_password
-    self.password = "hashed_#{password}" # Simulated password hashing
-    Rails.logger.info("Password hashed for user with email: #{email}")
+    self.password = "hashed_#{password}" # Simulating password hashing
+    Rails.logger.info("Password hashed for #{email}")
   end
 
-  def log_saving
-    Rails.logger.info("Saving user with email: #{email}")
-    yield
-    Rails.logger.info("User saved with email: #{email}")
-  end
-
-  def update_cache
-    Rails.cache.write([ "user_data", self ], attributes)
-    Rails.logger.info("Update Cache")
+  def log_save
+    Rails.logger.info("User #{email} has been saved")
   end
 
   def set_default_role
-    self.role = "user" if role.blank?
-    Rails.logger.info("User role set to default: user")
-  end
-
-  def log_creation
-    Rails.logger.info("Creating user with email: #{email}")
-    yield
-    Rails.logger.info("User created with email: #{email}")
+    self.role ||= "user"
+    Rails.logger.info("Default role set to #{role}")
   end
 
   def send_welcome_email
-    Rails.logger.info("User welcome email sent to: #{email}")
+    Rails.logger.info("Welcome email sent to #{email}")
   end
 
-  def check_role_change
-    Rails.logger.info("User role changed to #{role}") if role_changed?
+  def log_before_update
+    Rails.logger.info("Updating user #{email}")
   end
 
-  def log_updating
-    Rails.logger.info("Updating user with email: #{email}")
-    yield
-    Rails.logger.info("User updated with email: #{email}")
+  def log_after_update
+    Rails.logger.info("User #{email} updated")
   end
 
-  def send_update_email
-    Rails.logger.info("Update email sent to: #{email}")
+  def log_before_destroy
+    Rails.logger.info("Destroying user #{email}")
   end
 
-  def check_admin_count
-    if role == "admin" && User.where(role: "admin").count == 1
-      throw :abort
-    end
-    Rails.logger.info("Checked the admin count")
+  def log_after_destroy
+    Rails.logger.info("User #{email} destroyed")
   end
 
-  def log_destroy_operation
-    Rails.logger.info("About to destroy user with ID #{id}")
-    yield
-    Rails.logger.info("User with ID #{id} destroyed successfully")
+  def log_after_initialize
+    Rails.logger.info("User object initialized")
   end
 
-  def notify_users
-    Rails.logger.info("Notification sent to other users about user deletion")
+  def log_after_find
+    Rails.logger.info("User record found")
+  end
+
+  def log_after_touch
+    Rails.logger.info("User record touched")
   end
 end
