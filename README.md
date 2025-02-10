@@ -236,4 +236,187 @@ end
 book.touch
 ```
 
+# 2. Running Callbacks
+
+**The following methods trigger callbacks**:
+
+- `create`
+
+- `create!`
+
+- `destroy`
+
+- `destroy!`
+
+- `destroy_all`
+
+- `destroy_by`
+
+- `save`
+
+- `save!`
+
+- `save(validate: false)`
+
+- `save!(validate: false)`
+
+- `toggle!`
+
+- `touch`
+
+- `update_attribute`
+
+- `update_attribute!`
+
+- `update`
+
+- `update!`
+
+- `valid?`
+
+- `validate`
+
+**Additionally, the `after_find` callback is triggered by the following finder methods**:
+
+- `all
+
+- `first
+
+- `find
+
+- `find_by
+
+- `find_by!
+
+- `find_by_*
+
+- `find_by_*!
+
+- `find_by_sql
+
+- `last
+
+- `sole
+
+- `take
+
+The `after_initialize` callback is triggered every time a new object of the class is initialized.
+
+# 3. Conditional Callbacks
+
+- As with validations, callbacks can be made conditional using `:if` and `:unless` options, which accept a symbol, a `Proc`, or an `array`.
+
+## 3.1 Using `:if` and `:unless` with a Symbol
+
+```ruby
+class Order < ApplicationRecord
+  before_save :normalize_card_number, if: :paid_with_card?
+end
+```
+
+## 3.2 Using :if and :unless with a Proc
+
+```ruby
+class Order < ApplicationRecord
+  before_save :normalize_card_number, if: ->(order) { order.paid_with_card? }
+end
+
+or
+
+class Order < ApplicationRecord
+  before_save :normalize_card_number, if: -> { paid_with_card? }
+end
+```
+
+# 3.3 Multiple Callback Conditions
+
+```ruby
+class Comment < ApplicationRecord
+  before_save :filter_content, if: [:subject_to_parental_control?, :untrusted_author?]
+end
+
+With a proc:
+
+class Comment < ApplicationRecord
+  before_save :filter_content, if: [:subject_to_parental_control?, -> { untrusted_author? }]
+end
+```
+
+# 3.4 Using Both :if and :unless
+
+```ruby
+class Comment < ApplicationRecord
+  before_save :filter_content,
+    if: -> { forum.parental_control? },
+    unless: -> { author.trusted? }
+end
+```
+
+- The callback only runs when all `:if` conditions and none of the `:unless` conditions evaluate to `true`.
+
+# 4. Skipping Callbacks
+
+- Certain methods bypass callbacks, including:
+
++ `decrement!`
+
++ `decrement_counter`
+
++ `delete`
+
++ `delete_all`
+
++ `delete_by`
+
++ `increment!`
+
++ `increment_counter`
+
++ `insert`
+
++ `insert!`
+
++ `insert_all`
+
++ `insert_all!`
+
++ `touch_all`
+
++ `update_column`
+
++ `update_columns`
+
++ `update_all`
+
++ `update_counters`
+
++ `upsert`
+
++ `upsert_all`
+
+```ruby
+class User < ApplicationRecord
+  before_save :log_email_change
+
+  private
+
+  def log_email_change
+    if email_changed?
+      Rails.logger.info("Email changed from #{email_was} to #{email}")
+    end
+  end
+end
+```
+
+- To update a record without triggering `before_save`:
+
+```bash
+user = User.find(1)
+user.update_columns(email: 'new_email@example.com')
+```
+
+- Skipping callbacks should be done with caution to avoid unintended side effects.
+
+
+
 
